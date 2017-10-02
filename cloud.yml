@@ -1,0 +1,37 @@
+#cloud-config
+---
+
+# include one or more SSH public keys
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDS9xKpf5tHCcFzoIs5Ir7byT985AVgsYb1gMsGI9SzQRxFs/1TzBkOjzEHwVUvRQ3UPIPu2Hy+yjF4s2v9GD7uJOTrvP5jXk5/riXm/5CUmnt9ZFLfMrfCxK+r5I3UStg3h53as/2+0SMJHzXQsD0IWivwXkJ9worLVyCFB236PCVMVhBJR1uXYo42lrbte5z+LBf3KNsMBLUvLvIF1qzaSXMZAI+N/XZrg5CPZCXGwKnm23UjLQdtOeKtyBHIoyOAFqbpiHJgOpitFsHtFF2R2xsQGcY8CFqXJB9O5WmCEF0N5G/f0qdUf18ezCjR0QzxFI7RtauSyjRh5PFg3r001numZIyGO2cT5Ze4EyBUG2pTGRTRPm/lCML7pzAiAvqobET8OzbWBInz/mKqW2Leibj1WAy5Hxv1XneQWGgcK0Zq5+Ne7Obf8wqFqiPCtCHnNop+o+Uxg9zWM/Y6HB3nT9L2/8RTIX5yXOJv3qBawWxFqxe+Bn2cqRgP/hqZ1A1vgQnh0Bws5DAlxyuITXIZWvh+osK2bRYppQTqNh/n2EUHEo5nUDIwjspvPwcYs9XTDqShxKmP8lCIk2twhCbuA2BZiTmH3ONWd8Fe/YpQN0W5kbfxKTDu471HTGfy+XuDnO/8tf4jpvX0WyHnSHCx46/4jTPmMBY+jdx56MLk+w== ProvisioningServer
+
+write-files:
+  - path: /etc/ssh/sshd_config
+    permissions: 0600
+    owner: root:root
+    content: |
+      # Use most defaults for sshd configuration.
+      UsePrivilegeSeparation sandbox
+      Port 33099 
+      LoginGraceTime 1m
+
+      PermitRootLogin no
+      AllowUsers core
+      PasswordAuthentication no
+      ChallengeResponseAuthentication no
+  - path: /etc/conf.d/nfs
+    permissions: '0644'
+    content: |
+      OPTS_RPC_MOUNTD=""
+  - path: /opt/bin/wupiao
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # [w]ait [u]ntil [p]ort [i]s [a]ctually [o]pen
+      [ -n "$1" ] && \
+        until curl -o /dev/null -sIf http://${1}; do \
+          sleep 1 && echo .;
+        done;
+      exit $?
+
+hostname: bootstrap
